@@ -45,6 +45,8 @@ void setTweaksEnabled(bool enabled)
 	}
 }
 
+#define ROLEACCOUNTD_STAGING_DIR "/private/var/db/com.apple.xpc.roleaccountd.staging/"
+
 void ensure_jbroot_symlink(const char* filepath)
 {
 	JBLogDebug("ensure_jbroot_symlink: %s", filepath);
@@ -65,8 +67,31 @@ void ensure_jbroot_symlink(const char* filepath)
 
 	JBLogDebug("%s : %s", realdirpath, jbrootpath);
 
-	if(strncmp(realdirpath, jbrootpath, strlen(jbrootpath)) != 0) 
+	if(strncmp(realdirpath, jbrootpath, strlen(jbrootpath)) == 0) {
+		//within jbroot
+	}
+	else if(strncmp(realdirpath, ROLEACCOUNTD_STAGING_DIR, sizeof(ROLEACCOUNTD_STAGING_DIR)-1) == 0)
+	{
+		char* bundleStr = realdirpath + sizeof(ROLEACCOUNTD_STAGING_DIR)-1;
+
+		int bundleStrLen = strlen(bundleStr);
+		if(bundleStrLen < (sizeof(".xpc/")-1)) {
+			return;
+		}
+
+		if(strcmp(bundleStr+bundleStrLen - (sizeof(".xpc/")-1), ".xpc/") != 0) {
+			//not a xpc bundle, ignore
+			return;
+		}
+
+		if(strncmp(bundleStr, "com.apple.", sizeof("com.apple.")-1)==0) {
+			//apple's bundle, ignore
+			return;
+		}
+	}
+	else {
 		return;
+	}
 
 	struct stat jbrootst;
 	assert(stat(jbrootpath, &jbrootst) == 0);
