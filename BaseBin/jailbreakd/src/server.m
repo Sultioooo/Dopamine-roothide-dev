@@ -74,20 +74,26 @@ void ensure_jbroot_symlink(const char* filepath)
 	{
 		char* bundleStr = realdirpath + sizeof(ROLEACCOUNTD_STAGING_DIR)-1;
 
-		int bundleStrLen = strlen(bundleStr);
-		if(bundleStrLen < (sizeof(".xpc/")-1)) {
-			return;
-		}
-
-		if(strcmp(bundleStr+bundleStrLen - (sizeof(".xpc/")-1), ".xpc/") != 0) {
-			//not a xpc bundle, ignore
-			return;
-		}
-
 		if(strncmp(bundleStr, "com.apple.", sizeof("com.apple.")-1)==0) {
 			//apple's bundle, ignore
 			return;
 		}
+
+		//should always have a next slash ^
+		char* nextslash = strchr(bundleStr, '/');
+		assert(nextslash != NULL);
+
+		int bundleStrLen = nextslash - bundleStr;
+		
+		if(bundleStrLen < (sizeof(".xpc")-1)) {
+			return;
+		}
+
+		if(strncmp(bundleStr+bundleStrLen - (sizeof(".xpc")-1), ".xpc", (sizeof(".xpc")-1)) != 0) {
+			//not a xpc bundle, ignore
+			return;
+		}
+
 	}
 	else {
 		return;
